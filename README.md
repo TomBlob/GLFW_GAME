@@ -23,6 +23,11 @@ This project is built with visual studio 2022, and uses the following libraries:
 - add include and src files to project
 - add include header paths in Additional Include Directories (ex: C:\Libraries\GLAD\include)
 
+### GLM (openGL mathematics library) installation:
+
+- clone repo from GitHub in include folder outside project
+- add include header paths in Additional Include Directories
+
 ### GitHub branches:
 
 - master: stable version of the project, with all features implemented and tested

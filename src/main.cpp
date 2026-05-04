@@ -1,10 +1,47 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include "renderer/Camera.h"
 #include "renderer/Shader.h"
 #include "renderer/Renderer.h"
 
 #include <iostream>
+
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
+float lastX = 400, lastY = 300;
+bool firstMouse = true;
+
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+
+bool keys[1024];
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+
+    if (key >= 0 && key < 1024) {
+        if (action == GLFW_PRESS) keys[key] = true;
+        else if (action == GLFW_RELEASE) keys[key] = false;
+    }
+}
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+    if (firstMouse) {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos;
+
+    lastX = xpos;
+    lastY = ypos;
+
+    camera.processMouse(xoffset, yoffset);
+}
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -30,6 +67,11 @@ int main() {
         glfwTerminate();
         return -1;
     }
+
+    // Register callbacks
+    glfwSetKeyCallback(window, key_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
@@ -67,6 +109,8 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
+    glEnable(GL_DEPTH_TEST);
+
     std::cout << "Buffers ready\n";
 
     // Load shaders from files
@@ -76,16 +120,36 @@ int main() {
 
     std::cout << "Shader loaded\n";
 
+	// cache uniform locations
+    shader.use();
+    int viewLoc = glGetUniformLocation(shader.ID, "view");
+    int projLoc = glGetUniformLocation(shader.ID, "projection");
+
     // Render loop
     while (!glfwWindowShouldClose(window)) {
+
+        glfwPollEvents();
+
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+        camera.processKeyboard(keys, deltaTime);
+
         renderer.clear(0.1f, 0.1f, 0.1f);
 
+        glm::mat4 view = camera.getViewMatrix();
+        glm::mat4 projection = glm::perspective(glm::radians(camera.fov), 800.0f / 600.0f, 0.1f, 100.0f);
+
         shader.use();
+
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+        glUniformMatrix4fv(projLoc, 1, GL_FALSE, &projection[0][0]);
+
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
         glfwSwapBuffers(window);
-        glfwPollEvents();
     }
 
     // Cleanup
