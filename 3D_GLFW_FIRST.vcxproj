@@ -147,21 +147,37 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\glad.c">
+    <ClCompile Include="src\renderer\shader.cpp" />
+    <ClCompile Include="src\ecs\components.cpp" />
+    <ClCompile Include="src\ecs\entity.cpp" />
+    <ClCompile Include="src\core\input.cpp" />
+    <ClCompile Include="src\utils\glad.c">
       <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MultiThreadedDLL</RuntimeLibrary>
       <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MultiThreadedDLL</RuntimeLibrary>
       <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">MultiThreadedDLL</RuntimeLibrary>
       <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\renderer\renderer.cpp" />
+    <ClCompile Include="src\core\window.cpp" />
+    <ClCompile Include="src\ecs\systems.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
     <None Include="README.md" />
+    <None Include="shaders\basic.frag" />
+    <None Include="shaders\basic.vert" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\ecs\components.h" />
+    <ClInclude Include="include\ecs\entity.h" />
     <ClInclude Include="include\glad\glad.h" />
+    <ClInclude Include="include\renderer\renderer.h" />
     <ClInclude Include="include\KHR\khrplatform.h" />
+    <ClInclude Include="include\core\window.h" />
+    <ClInclude Include="include\core\input.h" />
+    <ClInclude Include="include\ecs\systems.h" />
+    <ClInclude Include="include\renderer\shader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
