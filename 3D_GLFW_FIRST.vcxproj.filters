@@ -54,6 +54,7 @@
     <None Include="README.md" />
     <None Include="shaders\basic.frag" />
     <None Include="shaders\basic.vert" />
+    <None Include="shaders\grid.frag" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\glad\glad.h">

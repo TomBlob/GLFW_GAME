@@ -57,6 +57,20 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
+glm::mat4 buildModelMatrix(const Object& obj) {
+    glm::mat4 model = glm::mat4(1.0f);
+
+    model = glm::translate(model, obj.position);
+
+    model = glm::rotate(model, glm::radians(obj.rotation.x), glm::vec3(1, 0, 0));
+    model = glm::rotate(model, glm::radians(obj.rotation.y), glm::vec3(0, 1, 0));
+    model = glm::rotate(model, glm::radians(obj.rotation.z), glm::vec3(0, 0, 1));
+
+    model = glm::scale(model, obj.scale);
+
+    return model;
+}
+
 int main() {
     std::cout << "Starting game...\n";
 
@@ -119,31 +133,31 @@ int main() {
 	};
 
     glEnable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
 
-    Mesh mesh(triangle);
-	Mesh mesh2(square);
+    Mesh mesh_triangle(triangle);
+	Mesh mesh_square(square);
 
     std::vector<Object> objects = {
-    { &mesh, {0,0,-2}, {0,0,0}, {1,1,1}, {1,0,0} }, // red
-    { &mesh, {2,0,-5}, {0,0,0}, {1,1,1}, {0,1,0} }, // green
-    { &mesh, {-1,1,-3}, {0,0,0}, {1,1,1}, {0,0,1} }, // blue
-	{ &mesh2, {-2,-1,-4}, {0,0,0}, {1,1,1}, {0.5f, 0.5f, 0.5f} }, // yellow
+    { &mesh_triangle, {0,0,-2}, {0,0,0}, {1,1,1}, {1,0,0} }, // red
+    { &mesh_triangle, {2,0,-5}, {0,0,0}, {1,1,1}, {0,1,0} }, // green
+    { &mesh_triangle, {-1,1,-3}, {0,0,0}, {1,1,1}, {0,0,1} } // blue
     };
 
-    objects[3].rotation.x = 90.0f;
-	objects[3].scale = glm::vec3(30, 30, 1);
+	Object floor = { &mesh_square, {0,-3,0}, {90,0,0}, {50,50,1}, {0.4f, 0.4f, 0.4f} };
 
     std::cout << "Buffers ready\n";
 
     // Load shaders from files
     Shader shader("shaders/basic.vert", "shaders/basic.frag");
+    Shader gridShader("shaders/basic.vert", "shaders/grid.frag");
 
     int modelLoc = glGetUniformLocation(shader.ID, "model");
     int colorLoc = glGetUniformLocation(shader.ID, "color");
 
-    Renderer renderer;
-
     std::cout << "Shader loaded\n";
+
+    Renderer renderer;
 
 	// cache uniform locations
     shader.use();
@@ -166,6 +180,19 @@ int main() {
 
         renderer.clear(0.1f, 0.1f, 0.1f);
 
+        int gridModelLoc = glGetUniformLocation(gridShader.ID, "model");
+        int gridViewLoc = glGetUniformLocation(gridShader.ID, "view");
+        int gridProjLoc = glGetUniformLocation(gridShader.ID, "projection");
+
+        gridShader.use();
+
+        glUniformMatrix4fv(gridViewLoc, 1, GL_FALSE, &view[0][0]);
+        glUniformMatrix4fv(gridProjLoc, 1, GL_FALSE, &projection[0][0]);
+
+        glm::mat4 model = buildModelMatrix(floor);
+        glUniformMatrix4fv(gridModelLoc, 1, GL_FALSE, &model[0][0]);
+        floor.mesh->draw();
+
         shader.use();
 
 		// set view and projection matrices once per frame
@@ -173,16 +200,8 @@ int main() {
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, &projection[0][0]);
 
         for (auto& obj : objects) {
-            glm::mat4 model = glm::mat4(1.0f);
-
-            model = glm::translate(model, obj.position);
-
-            model = glm::rotate(model, glm::radians(obj.rotation.x), glm::vec3(1, 0, 0));
-            model = glm::rotate(model, glm::radians(obj.rotation.y), glm::vec3(0, 1, 0));
-            model = glm::rotate(model, glm::radians(obj.rotation.z), glm::vec3(0, 0, 1));
-
-            model = glm::scale(model, obj.scale);
-
+            
+            glm::mat4 model = buildModelMatrix(obj);
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
             glUniform3fv(colorLoc, 1, &obj.color[0]);
 
