@@ -1,12 +1,14 @@
 #pragma once
 #include <vector>
+#include <glad/glad.h>
 
 class Mesh {
-public:
-    unsigned int VAO, VBO;
-    int vertexCount;
+    unsigned int VAO = 0, VBO = 0;
+	unsigned int vertexCount = 0;
+    GLenum drawMode;
 
-    Mesh(const std::vector<float>& vertices);
+public:
+    Mesh(const std::vector<float>& vertices, GLenum mode = GL_TRIANGLES);
     ~Mesh();
 
 	// copying is not allowed
@@ -14,8 +16,8 @@ public:
     Mesh& operator=(const Mesh&) = delete;
 
 	// but moving is fine
-    Mesh(Mesh&&) = default;
-    Mesh& operator=(Mesh&&) = default;
+    Mesh(Mesh&& other) noexcept;
+    Mesh& operator=(Mesh&& other) noexcept;
 
     void draw() const;
 };

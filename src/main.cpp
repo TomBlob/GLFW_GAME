@@ -113,6 +113,10 @@ int main() {
     // Debug: print OpenGL version
     std::cout << "OpenGL version: " << glGetString(GL_VERSION) << "\n";
 
+
+	// -------------------------------------------------------
+
+
     // Triangle data
     std::vector<float> triangle = {
         -0.5f, -0.5f, 0.0f,
@@ -132,16 +136,74 @@ int main() {
         -0.5f, -0.5f, 0.0f
 	};
 
+    std::vector<float> cube = {
+        // back face
+        -0.5f,-0.5f,-0.5f,  0.5f,-0.5f,-0.5f,  0.5f, 0.5f,-0.5f,
+         0.5f, 0.5f,-0.5f, -0.5f, 0.5f,-0.5f, -0.5f,-0.5f,-0.5f,
+
+        // front face
+        -0.5f,-0.5f, 0.5f,  0.5f,-0.5f, 0.5f,  0.5f, 0.5f, 0.5f,
+         0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f,-0.5f, 0.5f,
+
+        // left face
+        -0.5f, 0.5f, 0.5f, -0.5f, 0.5f,-0.5f, -0.5f,-0.5f,-0.5f,
+        -0.5f,-0.5f,-0.5f, -0.5f,-0.5f, 0.5f, -0.5f, 0.5f, 0.5f,
+
+        // right face
+        0.5f, 0.5f, 0.5f,  0.5f, 0.5f,-0.5f,  0.5f,-0.5f,-0.5f,
+        0.5f,-0.5f,-0.5f,  0.5f,-0.5f, 0.5f,  0.5f, 0.5f, 0.5f,
+
+        // bottom face
+        -0.5f,-0.5f,-0.5f,  0.5f,-0.5f,-0.5f,  0.5f,-0.5f, 0.5f,
+        0.5f,-0.5f, 0.5f, -0.5f,-0.5f, 0.5f, -0.5f,-0.5f,-0.5f,
+
+        // top face
+        -0.5f, 0.5f,-0.5f,  0.5f, 0.5f,-0.5f,  0.5f, 0.5f, 0.5f,
+        0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f,-0.5f
+    };
+
+    std::vector<float> cubeEdges = {
+        // bottom square
+        -0.5f,-0.5f,-0.5f,  0.5f,-0.5f,-0.5f,
+         0.5f,-0.5f,-0.5f,  0.5f,-0.5f, 0.5f,
+         0.5f,-0.5f, 0.5f, -0.5f,-0.5f, 0.5f,
+        -0.5f,-0.5f, 0.5f, -0.5f,-0.5f,-0.5f,
+
+        // top square
+        -0.5f, 0.5f,-0.5f,  0.5f, 0.5f,-0.5f,
+         0.5f, 0.5f,-0.5f,  0.5f, 0.5f, 0.5f,
+         0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f,
+        -0.5f, 0.5f, 0.5f, -0.5f, 0.5f,-0.5f,
+
+        // vertical lines
+        -0.5f,-0.5f,-0.5f, -0.5f, 0.5f,-0.5f,
+         0.5f,-0.5f,-0.5f,  0.5f, 0.5f,-0.5f,
+         0.5f,-0.5f, 0.5f,  0.5f, 0.5f, 0.5f,
+        -0.5f,-0.5f, 0.5f, -0.5f, 0.5f, 0.5f
+    };
+
+    // -------------------------------------------------------
+
+
+
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
 
     Mesh mesh_triangle(triangle);
 	Mesh mesh_square(square);
+	Mesh mesh_cube(cube);
+    Mesh mesh_cube_edges(cubeEdges, GL_LINES);
 
-    std::vector<Object> objects = {
+    std::vector<Object> triangles = {
     { &mesh_triangle, {0,0,-2}, {0,0,0}, {1,1,1}, {1,0,0} }, // red
     { &mesh_triangle, {2,0,-5}, {0,0,0}, {1,1,1}, {0,1,0} }, // green
     { &mesh_triangle, {-1,1,-3}, {0,0,0}, {1,1,1}, {0,0,1} } // blue
+    };
+
+    std::vector<Object> cubes = {
+    { &mesh_cube, {0,0,-3}, {0,0,0}, {1,1,1}, {1,0,0} },
+    { &mesh_cube, {2,0,-5}, {0,0,0}, {1,1,1}, {0,1,0} },
+    { &mesh_cube, {-2,0,-4}, {0,0,0}, {1,1,1}, {0,0,1} }
     };
 
 	Object floor = { &mesh_square, {0,-3,0}, {90,0,0}, {50,50,1}, {0.4f, 0.4f, 0.4f} };
@@ -199,13 +261,24 @@ int main() {
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, &projection[0][0]);
 
-        for (auto& obj : objects) {
+        for (auto& triangle : triangles) {
             
-            glm::mat4 model = buildModelMatrix(obj);
+            glm::mat4 model = buildModelMatrix(triangle);
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
-            glUniform3fv(colorLoc, 1, &obj.color[0]);
+            glUniform3fv(colorLoc, 1, &triangle.color[0]);
+            triangle.mesh->draw();
+        }
+        
+        for (auto& cube : cubes) {
+            
+            glm::mat4 model = buildModelMatrix(cube);
+            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
+            glUniform3fv(colorLoc, 1, &cube.color[0]);
+            cube.mesh->draw();
 
-            obj.mesh->draw();
+            glLineWidth(2.0f);
+            glUniform3f(colorLoc, 0.05f, 0.05f, 0.05f);
+            mesh_cube_edges.draw();
         }
 
         glfwSwapBuffers(window);
