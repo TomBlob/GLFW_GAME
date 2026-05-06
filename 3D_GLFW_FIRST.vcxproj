@@ -148,6 +148,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\renderer\camera.cpp" />
+    <ClCompile Include="src\renderer\mesh.cpp" />
     <ClCompile Include="src\renderer\shader.cpp" />
     <ClCompile Include="src\ecs\components.cpp" />
     <ClCompile Include="src\ecs\entity.cpp" />
@@ -174,6 +175,7 @@
     <ClInclude Include="include\ecs\components.h" />
     <ClInclude Include="include\ecs\entity.h" />
     <ClInclude Include="include\glad\glad.h" />
+    <ClInclude Include="include\renderer\mesh.h" />
     <ClInclude Include="include\renderer\renderer.h" />
     <ClInclude Include="include\KHR\khrplatform.h" />
     <ClInclude Include="include\core\window.h" />
