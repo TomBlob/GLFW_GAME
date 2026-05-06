@@ -13,10 +13,19 @@ Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 float lastX = 400, lastY = 300;
 bool firstMouse = true;
 
+float aspect = 1500.0f / 1000.0f;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 bool keys[1024];
+
+struct Object {
+    Mesh* mesh;
+    glm::vec3 position;
+    glm::vec3 rotation;
+    glm::vec3 scale;
+    glm::vec3 color;
+};
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
@@ -97,14 +106,40 @@ int main() {
         0.0f,  0.5f, 0.0f
     };
 
-    Mesh mesh(triangle);
+    std::vector<float> square = {
+        // first triangle
+        -0.5f, -0.5f, 0.0f,
+        0.5f, -0.5f, 0.0f,
+        0.5f,  0.5f, 0.0f,
+
+        // second triangle
+        0.5f,  0.5f, 0.0f,
+        -0.5f,  0.5f, 0.0f,
+        -0.5f, -0.5f, 0.0f
+	};
 
     glEnable(GL_DEPTH_TEST);
+
+    Mesh mesh(triangle);
+	Mesh mesh2(square);
+
+    std::vector<Object> objects = {
+    { &mesh, {0,0,-2}, {0,0,0}, {1,1,1}, {1,0,0} }, // red
+    { &mesh, {2,0,-5}, {0,0,0}, {1,1,1}, {0,1,0} }, // green
+    { &mesh, {-1,1,-3}, {0,0,0}, {1,1,1}, {0,0,1} }, // blue
+	{ &mesh2, {-2,-1,-4}, {0,0,0}, {1,1,1}, {0.5f, 0.5f, 0.5f} }, // yellow
+    };
+
+    objects[3].rotation.x = 90.0f;
+	objects[3].scale = glm::vec3(30, 30, 1);
 
     std::cout << "Buffers ready\n";
 
     // Load shaders from files
     Shader shader("shaders/basic.vert", "shaders/basic.frag");
+
+    int modelLoc = glGetUniformLocation(shader.ID, "model");
+    int colorLoc = glGetUniformLocation(shader.ID, "color");
 
     Renderer renderer;
 
@@ -126,18 +161,33 @@ int main() {
 
         camera.processKeyboard(keys, deltaTime);
 
-        renderer.clear(0.1f, 0.1f, 0.1f);
-
         glm::mat4 view = camera.getViewMatrix();
-        glm::mat4 projection = glm::perspective(glm::radians(camera.fov), 800.0f / 600.0f, 0.1f, 100.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.fov), aspect, 0.1f, 100.0f);
+
+        renderer.clear(0.1f, 0.1f, 0.1f);
 
         shader.use();
 
+		// set view and projection matrices once per frame
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, &projection[0][0]);
 
-		// draw triangle (automatic cleanup with destructor)
-        mesh.draw();
+        for (auto& obj : objects) {
+            glm::mat4 model = glm::mat4(1.0f);
+
+            model = glm::translate(model, obj.position);
+
+            model = glm::rotate(model, glm::radians(obj.rotation.x), glm::vec3(1, 0, 0));
+            model = glm::rotate(model, glm::radians(obj.rotation.y), glm::vec3(0, 1, 0));
+            model = glm::rotate(model, glm::radians(obj.rotation.z), glm::vec3(0, 0, 1));
+
+            model = glm::scale(model, obj.scale);
+
+            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
+            glUniform3fv(colorLoc, 1, &obj.color[0]);
+
+            obj.mesh->draw();
+        }
 
         glfwSwapBuffers(window);
     }
