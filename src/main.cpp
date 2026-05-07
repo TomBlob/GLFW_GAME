@@ -236,6 +236,7 @@ int main() {
         lastFrame = currentFrame;
 
         camera.processKeyboard(keys, deltaTime);
+        camera.update(deltaTime);
 
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.fov), aspect, 0.1f, 100.0f);

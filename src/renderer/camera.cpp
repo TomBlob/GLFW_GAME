@@ -4,9 +4,11 @@
 Camera::Camera(glm::vec3 startPos)
     : position(startPos),
     yaw(-90.0f),
+	mouseAcceleration(8.0f),
+    friction(1.0f),
     pitch(0.0f),
-    speed(3.0f),
-    sensitivity(0.1f),
+    maxSpeed(4.0f),
+    sensitivity(0.06f),
     fov(45.0f),
     front(glm::vec3(0.0f, 0.0f, -1.0f)),
     up(glm::vec3(0.0f, 1.0f, 0.0f))
@@ -19,20 +21,46 @@ glm::mat4 Camera::getViewMatrix() const {
 }
 
 void Camera::processKeyboard(bool* keys, float deltaTime) {
-    float velocity = speed * deltaTime;
+    glm::vec3 inputDir(0.0f);
 
-    if (keys[GLFW_KEY_W]) position += front * velocity;
-    if (keys[GLFW_KEY_S]) position -= front * velocity;
-    if (keys[GLFW_KEY_A]) position -= right * velocity;
-    if (keys[GLFW_KEY_D]) position += right * velocity;
+    if (keys[GLFW_KEY_W]) inputDir += front;
+    if (keys[GLFW_KEY_S]) inputDir -= front;
+    if (keys[GLFW_KEY_A]) inputDir -= right;
+    if (keys[GLFW_KEY_D]) inputDir += right;
+    if (keys[GLFW_KEY_SPACE]) inputDir += up;
+    if (keys[GLFW_KEY_LEFT_CONTROL]) inputDir -= up;
+
+    if (glm::length(inputDir) > 0.0f)
+        inputDir = glm::normalize(inputDir);
+
+    float currentSpeed = maxSpeed;
+
+    if (keys[GLFW_KEY_LEFT_SHIFT])
+        currentSpeed *= shiftModif; // sprint
+
+    position += inputDir * currentSpeed * deltaTime;
 }
 
 void Camera::processMouse(float xoffset, float yoffset) {
     xoffset *= sensitivity;
     yoffset *= sensitivity;
 
-    yaw += xoffset;
-    pitch += yoffset;
+    yawVelocity += xoffset * mouseAcceleration;
+    pitchVelocity += yoffset * mouseAcceleration;
+
+    if (pitch > 89.0f) pitch = 89.0f;
+    if (pitch < -89.0f) pitch = -89.0f;
+
+    updateVectors();
+}
+
+void Camera::update(float deltaTime)
+{
+    yaw += yawVelocity * deltaTime;
+    pitch += pitchVelocity * deltaTime;
+
+    yawVelocity -= yawVelocity * mouseDamping * deltaTime;
+    pitchVelocity -= pitchVelocity * mouseDamping * deltaTime;
 
     if (pitch > 89.0f) pitch = 89.0f;
     if (pitch < -89.0f) pitch = -89.0f;
