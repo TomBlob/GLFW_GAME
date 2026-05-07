@@ -6,18 +6,13 @@
 #include "renderer/Renderer.h"
 #include "renderer/Mesh.h"
 
+#include "core/input.h"
+
 #include <iostream>
 
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera* g_camera = nullptr;
+Input* g_input = nullptr;
 
-float lastX = 400, lastY = 300;
-bool firstMouse = true;
-
-float aspect = 1500.0f / 1000.0f;
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
-
-bool keys[1024];
 
 struct Object {
     Mesh* mesh;
@@ -27,30 +22,24 @@ struct Object {
     glm::vec3 color;
 };
 
+// callback functions
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    if (key >= 0 && key < 1024) {
-        if (action == GLFW_PRESS) keys[key] = true;
-        else if (action == GLFW_RELEASE) keys[key] = false;
+    if (g_input) {
+        g_input->updateKeyState(key, action);
     }
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-    if (firstMouse) {
-        lastX = xpos;
-        lastY = ypos;
-        firstMouse = false;
-    }
-
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos;
-
-    lastX = xpos;
-    lastY = ypos;
-
-    camera.processMouse(xoffset, yoffset);
+    if (g_input) {
+        g_input->updateMousePosition(xpos, ypos);
+        if (g_camera) {
+            g_camera->processMouse(g_input->getMouseDeltaX(),
+                g_input->getMouseDeltaY());
+        }
+    }   
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
@@ -74,6 +63,16 @@ glm::mat4 buildModelMatrix(const Object& obj) {
 int main() {
     std::cout << "Starting game...\n";
 
+	Input input;
+	g_input = &input;
+
+	Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+	g_camera = &camera;
+
+    float aspect = 1500.0f / 1000.0f;
+    float deltaTime = 0.0f;
+    float lastFrame = 0.0f;
+
     // Init GLFW
     if (!glfwInit()) {
         std::cout << "Failed to initialize GLFW\n";
@@ -96,9 +95,9 @@ int main() {
     glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-    glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    
+    glfwMakeContextCurrent(window);
 
     std::cout << "Window created\n";
 
@@ -114,10 +113,10 @@ int main() {
     std::cout << "OpenGL version: " << glGetString(GL_VERSION) << "\n";
 
 
-	// -------------------------------------------------------
+    // -------------------------------------------------------
+    // MESH DATA
+    // -------------------------------------------------------
 
-
-    // Triangle data
     std::vector<float> triangle = {
         -0.5f, -0.5f, 0.0f,
         0.5f, -0.5f, 0.0f,
@@ -189,6 +188,11 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
 
+
+    // -------------------------------------------------------
+    // OBJECTS
+    // -------------------------------------------------------
+
     Mesh mesh_triangle(triangle);
 	Mesh mesh_square(square);
 	Mesh mesh_cube(cube);
@@ -208,14 +212,14 @@ int main() {
 
 	Object floor = { &mesh_square, {0,-3,0}, {90,0,0}, {50,50,1}, {0.4f, 0.4f, 0.4f} };
 
+    // -------------------------------------------------------
+
+
     std::cout << "Buffers ready\n";
 
     // Load shaders from files
     Shader shader("shaders/basic.vert", "shaders/basic.frag");
     Shader gridShader("shaders/basic.vert", "shaders/grid.frag");
-
-    int modelLoc = glGetUniformLocation(shader.ID, "model");
-    int colorLoc = glGetUniformLocation(shader.ID, "color");
 
     std::cout << "Shader loaded\n";
 
@@ -223,6 +227,8 @@ int main() {
 
 	// cache uniform locations
     shader.use();
+    int modelLoc = glGetUniformLocation(shader.ID, "model");
+    int colorLoc = glGetUniformLocation(shader.ID, "color");
     int viewLoc = glGetUniformLocation(shader.ID, "view");
     int projLoc = glGetUniformLocation(shader.ID, "projection");
 
@@ -235,14 +241,36 @@ int main() {
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
+        // Update camera with input
+        // Use input to check key presses
+        bool forwardPressed = input.isKeyPressed(GLFW_KEY_W);
+        bool backwardPressed = input.isKeyPressed(GLFW_KEY_S);
+        bool leftPressed = input.isKeyPressed(GLFW_KEY_A);
+        bool rightPressed = input.isKeyPressed(GLFW_KEY_D);
+        bool upPressed = input.isKeyPressed(GLFW_KEY_SPACE);
+        bool downPressed = input.isKeyPressed(GLFW_KEY_LEFT_CONTROL);
+        bool sprintPressed = input.isKeyPressed(GLFW_KEY_LEFT_SHIFT);
+
+        // Create a keys array for camera (you could refactor camera to use Input class directly)
+        bool keys[1024] = {};
+        keys[GLFW_KEY_W] = forwardPressed;
+        keys[GLFW_KEY_S] = backwardPressed;
+        keys[GLFW_KEY_A] = leftPressed;
+        keys[GLFW_KEY_D] = rightPressed;
+        keys[GLFW_KEY_SPACE] = upPressed;
+        keys[GLFW_KEY_LEFT_CONTROL] = downPressed;
+        keys[GLFW_KEY_LEFT_SHIFT] = sprintPressed;
+
         camera.processKeyboard(keys, deltaTime);
         camera.update(deltaTime);
 
+        // rendering
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.fov), aspect, 0.1f, 100.0f);
 
         renderer.clear(0.1f, 0.1f, 0.1f);
 
+		// grid shader for floor
         int gridModelLoc = glGetUniformLocation(gridShader.ID, "model");
         int gridViewLoc = glGetUniformLocation(gridShader.ID, "view");
         int gridProjLoc = glGetUniformLocation(gridShader.ID, "projection");
@@ -256,6 +284,7 @@ int main() {
         glUniformMatrix4fv(gridModelLoc, 1, GL_FALSE, &model[0][0]);
         floor.mesh->draw();
 
+		// regular shader for objects
         shader.use();
 
 		// set view and projection matrices once per frame

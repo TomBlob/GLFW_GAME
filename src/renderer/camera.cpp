@@ -62,9 +62,6 @@ void Camera::update(float deltaTime)
     yawVelocity -= yawVelocity * mouseDamping * deltaTime;
     pitchVelocity -= pitchVelocity * mouseDamping * deltaTime;
 
-    if (pitch > 89.0f) pitch = 89.0f;
-    if (pitch < -89.0f) pitch = -89.0f;
-
     updateVectors();
 }
 
