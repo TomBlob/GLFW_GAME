@@ -22,14 +22,21 @@ void Camera::clampPitch() {
 }
 
 void Camera::processKeyboard(bool* keys, float deltaTime) {
+    // Movement is now world-space:
+    // - WASD move along world X/Z axes (A/D on X, W/S on Z)
+    // - Space / Left Control move strictly along world Y (up/down)
     glm::vec3 inputDir(0.0f);
+
+    const glm::vec3 WORLD_FORWARD(0.0f, 0.0f, -1.0f);
+    const glm::vec3 WORLD_RIGHT(1.0f, 0.0f, 0.0f);
+    const glm::vec3 WORLD_UP(0.0f, 1.0f, 0.0f);
 
     if (keys[GLFW_KEY_W]) inputDir += front;
     if (keys[GLFW_KEY_S]) inputDir -= front;
     if (keys[GLFW_KEY_A]) inputDir -= right;
     if (keys[GLFW_KEY_D]) inputDir += right;
-    if (keys[GLFW_KEY_SPACE]) inputDir += up;
-    if (keys[GLFW_KEY_LEFT_CONTROL]) inputDir -= up;
+    if (keys[GLFW_KEY_SPACE]) inputDir += WORLD_UP;
+    if (keys[GLFW_KEY_LEFT_CONTROL]) inputDir -= WORLD_UP;
 
     if (glm::length(inputDir) > 0.0f)
         inputDir = glm::normalize(inputDir);

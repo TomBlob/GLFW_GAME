@@ -10,7 +10,13 @@ Input::~Input() = default;
 
 void Input::updateKeyState(int key, int action) {
     if (key >= 0 && key < 1024) {
-        keys[key] = (action == GLFW_PRESS);
+        // Treat GLFW_REPEAT as a pressed state so holding a key keeps it active.
+        if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+            keys[key] = true;
+        }
+        else if (action == GLFW_RELEASE) {
+            keys[key] = false;
+        }
     }
 }
 
