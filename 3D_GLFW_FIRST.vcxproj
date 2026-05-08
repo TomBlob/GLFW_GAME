@@ -147,6 +147,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\ecs\player.cpp" />
     <ClCompile Include="src\scenes\scenemanager.cpp" />
     <ClCompile Include="src\scenes\gamescene.cpp" />
     <ClCompile Include="src\scenes\menu.cpp" />
@@ -177,6 +178,7 @@
     <None Include="shaders\grid.frag" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\ecs\player.h" />
     <ClInclude Include="include\rendering\camera.h" />
     <ClInclude Include="include\ecs\components.h" />
     <ClInclude Include="include\ecs\entity.h" />

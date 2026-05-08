@@ -22,6 +22,11 @@ public:
     void processMouse(float xoffset, float yoffset);
     void update(float deltaTime);
 
+    // Getters for entity/physics code to read camera direction
+    glm::vec3 getFront() const { return front; }
+    glm::vec3 getRight() const { return right; }
+    glm::vec3 getUp() const { return up; }
+
     // Public properties
     glm::vec3 position;
     float yaw;
@@ -29,11 +34,11 @@ public:
     float fov;
 
     // Configuration
-    float mouseAcceleration = 12.0f;
-    float mouseDamping = 15.0f;
+    float mouseAcceleration = 18.0f;
+    float mouseDamping = 20.0f;
     float maxSpeed = 4.0f;
-    float shiftModif = 1.8f;
-    float sensitivity = 0.08f;
+    float shiftModif = 2.0f;
+    float sensitivity = 0.07f;
 
 private:
     glm::vec3 front;

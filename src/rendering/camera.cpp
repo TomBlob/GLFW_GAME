@@ -1,5 +1,5 @@
 #include "rendering/camera.h"
-#include "core/input.h" // implementation needs Input
+#include "core/input.h"
 
 Camera::Camera(glm::vec3 startPos)
     : position(startPos),

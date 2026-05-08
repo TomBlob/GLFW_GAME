@@ -14,6 +14,8 @@
 #include "scenes/gamescene.h"
 #include "scenes/menu.h"
 
+#include "ecs/player.h"
+
 #include <iostream>
 
 Camera* g_camera = nullptr;
@@ -185,6 +187,16 @@ int main() {
 
     g_camera = currentScene->getCamera();
 
+
+    // -------------------------------------------------------
+    // ADD PLAYER
+    // -------------------------------------------------------
+
+    // create near top (after g_camera assigned)
+    Player player(g_camera->position);   // start camera/player at same place
+    player.setGroundY(-2.5f);            // match your floor y
+	//player.flying = true;              // enable gravity for player
+
     // Cast to GameScene and set shared resources
     GameScene* gameScene = dynamic_cast<GameScene*>(currentScene);
     if (gameScene) {
@@ -211,8 +223,14 @@ int main() {
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        // Process input: use new Camera overload that queries Input directly
-        g_camera->processKeyboard(input, deltaTime);
+        // inside main render loop, instead of g_camera->processKeyboard(...)
+        player.handleInput(input, *g_camera, deltaTime);
+        player.update(deltaTime);
+
+        // make camera follow the player (optional smooth follow can be added)
+        g_camera->position = player.position;
+
+        // still handle mouse look as before
         g_camera->update(deltaTime);
 
         glm::mat4 view = g_camera->getViewMatrix();
