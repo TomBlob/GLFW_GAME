@@ -147,12 +147,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\renderer\camera.cpp" />
-    <ClCompile Include="src\renderer\mesh.cpp" />
-    <ClCompile Include="src\renderer\shader.cpp" />
+    <ClCompile Include="src\scenes\scenemanager.cpp" />
+    <ClCompile Include="src\scenes\gamescene.cpp" />
+    <ClCompile Include="src\scenes\menu.cpp" />
+    <ClCompile Include="src\scenes\scene.cpp" />
+    <ClCompile Include="src\rendering\camera.cpp" />
+    <ClCompile Include="src\rendering\mesh.cpp" />
+    <ClCompile Include="src\rendering\shader.cpp" />
     <ClCompile Include="src\ecs\components.cpp" />
     <ClCompile Include="src\ecs\entity.cpp" />
     <ClCompile Include="src\core\input.cpp" />
+    <ClCompile Include="src\scenes\sceneobject.cpp" />
     <ClCompile Include="src\utils\glad.c">
       <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MultiThreadedDLL</RuntimeLibrary>
       <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MultiThreadedDLL</RuntimeLibrary>
@@ -160,7 +165,7 @@
       <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\renderer\renderer.cpp" />
+    <ClCompile Include="src\rendering\renderer.cpp" />
     <ClCompile Include="src\core\window.cpp" />
     <ClCompile Include="src\ecs\systems.cpp" />
   </ItemGroup>
@@ -172,17 +177,22 @@
     <None Include="shaders\grid.frag" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\renderer\camera.h" />
+    <ClInclude Include="include\rendering\camera.h" />
     <ClInclude Include="include\ecs\components.h" />
     <ClInclude Include="include\ecs\entity.h" />
     <ClInclude Include="include\glad\glad.h" />
-    <ClInclude Include="include\renderer\mesh.h" />
-    <ClInclude Include="include\renderer\renderer.h" />
+    <ClInclude Include="include\rendering\mesh.h" />
+    <ClInclude Include="include\rendering\renderer.h" />
     <ClInclude Include="include\KHR\khrplatform.h" />
     <ClInclude Include="include\core\window.h" />
     <ClInclude Include="include\core\input.h" />
     <ClInclude Include="include\ecs\systems.h" />
-    <ClInclude Include="include\renderer\shader.h" />
+    <ClInclude Include="include\rendering\shader.h" />
+    <ClInclude Include="include\scenes\gamescene.h" />
+    <ClInclude Include="include\scenes\menu.h" />
+    <ClInclude Include="include\scenes\scene.h" />
+    <ClInclude Include="include\scenes\scenemanager.h" />
+    <ClInclude Include="include\scenes\sceneobject.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

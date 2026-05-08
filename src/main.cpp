@@ -1,26 +1,24 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "renderer/Camera.h"
-#include "renderer/Shader.h"
-#include "renderer/Renderer.h"
-#include "renderer/Mesh.h"
+#include "rendering/camera.h"
+#include "rendering/shader.h"
+#include "rendering/renderer.h"
+#include "rendering/mesh.h"
 
 #include "core/input.h"
+
+#include "scenes/scene.h"
+#include "scenes/sceneobject.h"
+#include "scenes/scenemanager.h"
+#include "scenes/gamescene.h"
+#include "scenes/menu.h"
 
 #include <iostream>
 
 Camera* g_camera = nullptr;
 Input* g_input = nullptr;
-
-
-struct Object {
-    Mesh* mesh;
-    glm::vec3 position;
-    glm::vec3 rotation;
-    glm::vec3 scale;
-    glm::vec3 color;
-};
+SceneManager* g_sceneManager = nullptr;
 
 // callback functions
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -33,31 +31,49 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-    if (g_input) {
+    if (g_input && g_camera) {
         g_input->updateMousePosition(xpos, ypos);
-        if (g_camera) {
-            g_camera->processMouse(g_input->getMouseDeltaX(),
-                g_input->getMouseDeltaY());
-        }
-    }   
+        g_camera->processMouse(g_input->getMouseDeltaX(), g_input->getMouseDeltaY());
+    }
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-glm::mat4 buildModelMatrix(const Object& obj) {
-    glm::mat4 model = glm::mat4(1.0f);
 
-    model = glm::translate(model, obj.position);
+std::vector<float> createCubeVertices() {
+    return {
+        -0.5f,-0.5f,-0.5f,  0.5f,-0.5f,-0.5f,  0.5f, 0.5f,-0.5f,
+         0.5f, 0.5f,-0.5f, -0.5f, 0.5f,-0.5f, -0.5f,-0.5f,-0.5f,
+        -0.5f,-0.5f, 0.5f,  0.5f,-0.5f, 0.5f,  0.5f, 0.5f, 0.5f,
+         0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f,-0.5f, 0.5f,
+        -0.5f, 0.5f, 0.5f, -0.5f, 0.5f,-0.5f, -0.5f,-0.5f,-0.5f,
+        -0.5f,-0.5f,-0.5f, -0.5f,-0.5f, 0.5f, -0.5f, 0.5f, 0.5f,
+        0.5f, 0.5f, 0.5f,  0.5f, 0.5f,-0.5f,  0.5f,-0.5f,-0.5f,
+        0.5f,-0.5f,-0.5f,  0.5f,-0.5f, 0.5f,  0.5f, 0.5f, 0.5f,
+        -0.5f,-0.5f,-0.5f,  0.5f,-0.5f,-0.5f,  0.5f,-0.5f, 0.5f,
+        0.5f,-0.5f, 0.5f, -0.5f,-0.5f, 0.5f, -0.5f,-0.5f,-0.5f,
+        -0.5f, 0.5f,-0.5f,  0.5f, 0.5f,-0.5f,  0.5f, 0.5f, 0.5f,
+        0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f,-0.5f
+    };
+}
 
-    model = glm::rotate(model, glm::radians(obj.rotation.x), glm::vec3(1, 0, 0));
-    model = glm::rotate(model, glm::radians(obj.rotation.y), glm::vec3(0, 1, 0));
-    model = glm::rotate(model, glm::radians(obj.rotation.z), glm::vec3(0, 0, 1));
-
-    model = glm::scale(model, obj.scale);
-
-    return model;
+std::vector<float> createCubeEdges() {
+    return {
+        -0.5f,-0.5f,-0.5f,  0.5f,-0.5f,-0.5f,
+         0.5f,-0.5f,-0.5f,  0.5f,-0.5f, 0.5f,
+         0.5f,-0.5f, 0.5f, -0.5f,-0.5f, 0.5f,
+        -0.5f,-0.5f, 0.5f, -0.5f,-0.5f,-0.5f,
+        -0.5f, 0.5f,-0.5f,  0.5f, 0.5f,-0.5f,
+         0.5f, 0.5f,-0.5f,  0.5f, 0.5f, 0.5f,
+         0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f,
+        -0.5f, 0.5f, 0.5f, -0.5f, 0.5f,-0.5f,
+        -0.5f,-0.5f,-0.5f, -0.5f, 0.5f,-0.5f,
+         0.5f,-0.5f,-0.5f,  0.5f, 0.5f,-0.5f,
+         0.5f,-0.5f, 0.5f,  0.5f, 0.5f, 0.5f,
+        -0.5f,-0.5f, 0.5f, -0.5f, 0.5f, 0.5f
+    };
 }
 
 int main() {
@@ -66,8 +82,8 @@ int main() {
 	Input input;
 	g_input = &input;
 
-	Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-	g_camera = &camera;
+    SceneManager sceneManager;
+    g_sceneManager = &sceneManager;
 
     float aspect = 1500.0f / 1000.0f;
     float deltaTime = 0.0f;
@@ -96,7 +112,6 @@ int main() {
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    
     glfwMakeContextCurrent(window);
 
     std::cout << "Window created\n";
@@ -108,9 +123,10 @@ int main() {
     }
 
     std::cout << "GLAD initialized\n";
-
-    // Debug: print OpenGL version
     std::cout << "OpenGL version: " << glGetString(GL_VERSION) << "\n";
+
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
 
 
     // -------------------------------------------------------
@@ -135,187 +151,96 @@ int main() {
         -0.5f, -0.5f, 0.0f
 	};
 
-    std::vector<float> cube = {
-        // back face
-        -0.5f,-0.5f,-0.5f,  0.5f,-0.5f,-0.5f,  0.5f, 0.5f,-0.5f,
-         0.5f, 0.5f,-0.5f, -0.5f, 0.5f,-0.5f, -0.5f,-0.5f,-0.5f,
-
-        // front face
-        -0.5f,-0.5f, 0.5f,  0.5f,-0.5f, 0.5f,  0.5f, 0.5f, 0.5f,
-         0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f,-0.5f, 0.5f,
-
-        // left face
-        -0.5f, 0.5f, 0.5f, -0.5f, 0.5f,-0.5f, -0.5f,-0.5f,-0.5f,
-        -0.5f,-0.5f,-0.5f, -0.5f,-0.5f, 0.5f, -0.5f, 0.5f, 0.5f,
-
-        // right face
-        0.5f, 0.5f, 0.5f,  0.5f, 0.5f,-0.5f,  0.5f,-0.5f,-0.5f,
-        0.5f,-0.5f,-0.5f,  0.5f,-0.5f, 0.5f,  0.5f, 0.5f, 0.5f,
-
-        // bottom face
-        -0.5f,-0.5f,-0.5f,  0.5f,-0.5f,-0.5f,  0.5f,-0.5f, 0.5f,
-        0.5f,-0.5f, 0.5f, -0.5f,-0.5f, 0.5f, -0.5f,-0.5f,-0.5f,
-
-        // top face
-        -0.5f, 0.5f,-0.5f,  0.5f, 0.5f,-0.5f,  0.5f, 0.5f, 0.5f,
-        0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f,-0.5f
-    };
-
-    std::vector<float> cubeEdges = {
-        // bottom square
-        -0.5f,-0.5f,-0.5f,  0.5f,-0.5f,-0.5f,
-         0.5f,-0.5f,-0.5f,  0.5f,-0.5f, 0.5f,
-         0.5f,-0.5f, 0.5f, -0.5f,-0.5f, 0.5f,
-        -0.5f,-0.5f, 0.5f, -0.5f,-0.5f,-0.5f,
-
-        // top square
-        -0.5f, 0.5f,-0.5f,  0.5f, 0.5f,-0.5f,
-         0.5f, 0.5f,-0.5f,  0.5f, 0.5f, 0.5f,
-         0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f,
-        -0.5f, 0.5f, 0.5f, -0.5f, 0.5f,-0.5f,
-
-        // vertical lines
-        -0.5f,-0.5f,-0.5f, -0.5f, 0.5f,-0.5f,
-         0.5f,-0.5f,-0.5f,  0.5f, 0.5f,-0.5f,
-         0.5f,-0.5f, 0.5f,  0.5f, 0.5f, 0.5f,
-        -0.5f,-0.5f, 0.5f, -0.5f, 0.5f, 0.5f
-    };
 
     // -------------------------------------------------------
-
-
-
-    glEnable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
-
-
-    // -------------------------------------------------------
-    // OBJECTS
+    // CREATE MESHES
     // -------------------------------------------------------
 
     Mesh mesh_triangle(triangle);
 	Mesh mesh_square(square);
-	Mesh mesh_cube(cube);
-    Mesh mesh_cube_edges(cubeEdges, GL_LINES);
+	Mesh mesh_cube(createCubeVertices());
+    Mesh mesh_cube_edges(createCubeEdges(), GL_LINES);
 
-    std::vector<Object> triangles = {
-    { &mesh_triangle, {0,0,-2}, {0,0,0}, {1,1,1}, {1,0,0} }, // red
-    { &mesh_triangle, {2,0,-5}, {0,0,0}, {1,1,1}, {0,1,0} }, // green
-    { &mesh_triangle, {-1,1,-3}, {0,0,0}, {1,1,1}, {0,0,1} } // blue
-    };
-
-    std::vector<Object> cubes = {
-    { &mesh_cube, {0,0,-3}, {0,0,0}, {1,1,1}, {1,0,0} },
-    { &mesh_cube, {2,0,-5}, {0,0,0}, {1,1,1}, {0,1,0} },
-    { &mesh_cube, {-2,0,-4}, {0,0,0}, {1,1,1}, {0,0,1} }
-    };
-
-	Object floor = { &mesh_square, {0,-3,0}, {90,0,0}, {50,50,1}, {0.4f, 0.4f, 0.4f} };
-
-    // -------------------------------------------------------
-
-
-    std::cout << "Buffers ready\n";
+    std::cout << "Buffers created\n";
 
     // Load shaders from files
     Shader shader("shaders/basic.vert", "shaders/basic.frag");
     Shader gridShader("shaders/basic.vert", "shaders/grid.frag");
 
-    std::cout << "Shader loaded\n";
+    std::cout << "Shaders loaded\n";
 
     Renderer renderer;
+	renderer.init(shader);
 
-	// cache uniform locations
-    shader.use();
-    int modelLoc = glGetUniformLocation(shader.ID, "model");
-    int colorLoc = glGetUniformLocation(shader.ID, "color");
+    // Register and load scene
+    sceneManager.registerScene<GameScene>("game");
+    sceneManager.loadScene("game");
+
+    Scene* currentScene = sceneManager.getCurrentScene();
+    if (!currentScene) {
+        std::cout << "Failed to load game scene\n";
+        glfwTerminate();
+        return -1;
+    }
+
+    g_camera = currentScene->getCamera();
+
+    // Cast to GameScene and set shared resources
+    GameScene* gameScene = dynamic_cast<GameScene*>(currentScene);
+    if (gameScene) {
+        gameScene->setSharedResources(&mesh_triangle, &mesh_square, &mesh_cube,
+            &mesh_cube_edges, &shader, &gridShader);
+    }
+
+	// Setup scene objects (supposed to be in onEnter, but we need to set shared resources first)
+	gameScene->setupSceneObjects();
+
+    // Cache uniform locations for main shader
     int viewLoc = glGetUniformLocation(shader.ID, "view");
     int projLoc = glGetUniformLocation(shader.ID, "projection");
+    int modelLoc = glGetUniformLocation(shader.ID, "model");
+    int colorLoc = glGetUniformLocation(shader.ID, "color");
+
+    shader.use();
 
     // Render loop
     while (!glfwWindowShouldClose(window)) {
-
         glfwPollEvents();
 
-        float currentFrame = glfwGetTime();
+        float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        // Update camera with input
-        // Use input to check key presses
-        bool forwardPressed = input.isKeyPressed(GLFW_KEY_W);
-        bool backwardPressed = input.isKeyPressed(GLFW_KEY_S);
-        bool leftPressed = input.isKeyPressed(GLFW_KEY_A);
-        bool rightPressed = input.isKeyPressed(GLFW_KEY_D);
-        bool upPressed = input.isKeyPressed(GLFW_KEY_SPACE);
-        bool downPressed = input.isKeyPressed(GLFW_KEY_LEFT_CONTROL);
-        bool sprintPressed = input.isKeyPressed(GLFW_KEY_LEFT_SHIFT);
-
-        // Create a keys array for camera (you could refactor camera to use Input class directly)
+        // Process input
         bool keys[1024] = {};
-        keys[GLFW_KEY_W] = forwardPressed;
-        keys[GLFW_KEY_S] = backwardPressed;
-        keys[GLFW_KEY_A] = leftPressed;
-        keys[GLFW_KEY_D] = rightPressed;
-        keys[GLFW_KEY_SPACE] = upPressed;
-        keys[GLFW_KEY_LEFT_CONTROL] = downPressed;
-        keys[GLFW_KEY_LEFT_SHIFT] = sprintPressed;
+        keys[GLFW_KEY_W] = input.isKeyPressed(GLFW_KEY_W);
+        keys[GLFW_KEY_S] = input.isKeyPressed(GLFW_KEY_S);
+        keys[GLFW_KEY_A] = input.isKeyPressed(GLFW_KEY_A);
+        keys[GLFW_KEY_D] = input.isKeyPressed(GLFW_KEY_D);
+        keys[GLFW_KEY_SPACE] = input.isKeyPressed(GLFW_KEY_SPACE);
+        keys[GLFW_KEY_LEFT_CONTROL] = input.isKeyPressed(GLFW_KEY_LEFT_CONTROL);
+        keys[GLFW_KEY_LEFT_SHIFT] = input.isKeyPressed(GLFW_KEY_LEFT_SHIFT);
 
-        camera.processKeyboard(keys, deltaTime);
-        camera.update(deltaTime);
+        g_camera->processKeyboard(keys, deltaTime);
+        g_camera->update(deltaTime);
 
-        // rendering
-        glm::mat4 view = camera.getViewMatrix();
-        glm::mat4 projection = glm::perspective(glm::radians(camera.fov), aspect, 0.1f, 100.0f);
+        glm::mat4 view = g_camera->getViewMatrix();
+        glm::mat4 projection = glm::perspective(glm::radians(g_camera->fov), aspect, 0.1f, 100.0f);
 
         renderer.clear(0.1f, 0.1f, 0.1f);
 
-		// grid shader for floor
-        int gridModelLoc = glGetUniformLocation(gridShader.ID, "model");
-        int gridViewLoc = glGetUniformLocation(gridShader.ID, "view");
-        int gridProjLoc = glGetUniformLocation(gridShader.ID, "projection");
-
-        gridShader.use();
-
-        glUniformMatrix4fv(gridViewLoc, 1, GL_FALSE, &view[0][0]);
-        glUniformMatrix4fv(gridProjLoc, 1, GL_FALSE, &projection[0][0]);
-
-        glm::mat4 model = buildModelMatrix(floor);
-        glUniformMatrix4fv(gridModelLoc, 1, GL_FALSE, &model[0][0]);
-        floor.mesh->draw();
-
-		// regular shader for objects
-        shader.use();
-
-		// set view and projection matrices once per frame
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
-        glUniformMatrix4fv(projLoc, 1, GL_FALSE, &projection[0][0]);
-
-        for (auto& triangle : triangles) {
-            
-            glm::mat4 model = buildModelMatrix(triangle);
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
-            glUniform3fv(colorLoc, 1, &triangle.color[0]);
-            triangle.mesh->draw();
-        }
-        
-        for (auto& cube : cubes) {
-            
-            glm::mat4 model = buildModelMatrix(cube);
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
-            glUniform3fv(colorLoc, 1, &cube.color[0]);
-            cube.mesh->draw();
-
-            glLineWidth(2.0f);
-            glUniform3f(colorLoc, 0.05f, 0.05f, 0.05f);
-            mesh_cube_edges.draw();
-        }
+        currentScene->update(deltaTime);
+        currentScene->render(view, projection);
 
         glfwSwapBuffers(window);
     }
 
-    glfwTerminate();
+    // Cleanup
+    g_input = nullptr;
+    g_camera = nullptr;
+    g_sceneManager = nullptr;
 
+    glfwTerminate();
     std::cout << "Program closed cleanly\n";
 
     return 0;

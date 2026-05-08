@@ -1,14 +1,10 @@
-#include "renderer/Camera.h"
+#include "rendering/camera.h"
 #include <glm/gtc/constants.hpp>
 
 Camera::Camera(glm::vec3 startPos)
     : position(startPos),
     yaw(-90.0f),
-	mouseAcceleration(8.0f),
-    friction(1.0f),
     pitch(0.0f),
-    maxSpeed(4.0f),
-    sensitivity(0.06f),
     fov(45.0f),
     front(glm::vec3(0.0f, 0.0f, -1.0f)),
     up(glm::vec3(0.0f, 1.0f, 0.0f))
@@ -18,6 +14,11 @@ Camera::Camera(glm::vec3 startPos)
 
 glm::mat4 Camera::getViewMatrix() const {
     return glm::lookAt(position, position + front, up);
+}
+
+void Camera::clampPitch() {
+    if (pitch > PITCH_MAX) pitch = PITCH_MAX;
+    if (pitch < PITCH_MIN) pitch = PITCH_MIN;
 }
 
 void Camera::processKeyboard(bool* keys, float deltaTime) {
@@ -34,9 +35,8 @@ void Camera::processKeyboard(bool* keys, float deltaTime) {
         inputDir = glm::normalize(inputDir);
 
     float currentSpeed = maxSpeed;
-
     if (keys[GLFW_KEY_LEFT_SHIFT])
-        currentSpeed *= shiftModif; // sprint
+        currentSpeed *= shiftModif;
 
     position += inputDir * currentSpeed * deltaTime;
 }
@@ -48,9 +48,7 @@ void Camera::processMouse(float xoffset, float yoffset) {
     yawVelocity += xoffset * mouseAcceleration;
     pitchVelocity += yoffset * mouseAcceleration;
 
-    if (pitch > 89.0f) pitch = 89.0f;
-    if (pitch < -89.0f) pitch = -89.0f;
-
+    clampPitch();
     updateVectors();
 }
 
@@ -62,6 +60,7 @@ void Camera::update(float deltaTime)
     yawVelocity -= yawVelocity * mouseDamping * deltaTime;
     pitchVelocity -= pitchVelocity * mouseDamping * deltaTime;
 
+    clampPitch();
     updateVectors();
 }
 

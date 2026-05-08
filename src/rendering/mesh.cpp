@@ -1,4 +1,4 @@
-#include "renderer/Mesh.h"
+#include "rendering/mesh.h"
 #include <glad/glad.h>
 
 Mesh::Mesh(const std::vector<float>& vertices, GLenum mode) : drawMode(mode) {

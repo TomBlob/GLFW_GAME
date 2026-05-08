@@ -28,6 +28,10 @@ This project is built with visual studio 2022, and uses the following libraries:
 - clone repo from GitHub in include folder outside project
 - add include header paths in Additional Include Directories
 
+### git tips:
+- use git config --global core.autocfrl true to avoid line ending issues when working on Windows
+- start new feature branches with feat-XYZ and merge back to dev when complete
+
 ### GitHub branches:
 
 - master: stable version of the project, with all features implemented and tested
