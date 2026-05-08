@@ -79,8 +79,8 @@ std::vector<float> createCubeEdges() {
 int main() {
     std::cout << "Starting game...\n";
 
-	Input input;
-	g_input = &input;
+    Input input;
+    g_input = &input;
 
     SceneManager sceneManager;
     g_sceneManager = &sceneManager;
@@ -149,7 +149,7 @@ int main() {
         0.5f,  0.5f, 0.0f,
         -0.5f,  0.5f, 0.0f,
         -0.5f, -0.5f, 0.0f
-	};
+    };
 
 
     // -------------------------------------------------------
@@ -157,8 +157,8 @@ int main() {
     // -------------------------------------------------------
 
     Mesh mesh_triangle(triangle);
-	Mesh mesh_square(square);
-	Mesh mesh_cube(createCubeVertices());
+    Mesh mesh_square(square);
+    Mesh mesh_cube(createCubeVertices());
     Mesh mesh_cube_edges(createCubeEdges(), GL_LINES);
 
     std::cout << "Buffers created\n";
@@ -170,7 +170,7 @@ int main() {
     std::cout << "Shaders loaded\n";
 
     Renderer renderer;
-	renderer.init(shader);
+    renderer.init(shader);
 
     // Register and load scene
     sceneManager.registerScene<GameScene>("game");
@@ -192,8 +192,8 @@ int main() {
             &mesh_cube_edges, &shader, &gridShader);
     }
 
-	// Setup scene objects (supposed to be in onEnter, but we need to set shared resources first)
-	gameScene->setupSceneObjects();
+    // Setup scene objects (supposed to be in onEnter, but we need to set shared resources first)
+    gameScene->setupSceneObjects();
 
     // Cache uniform locations for main shader
     int viewLoc = glGetUniformLocation(shader.ID, "view");
@@ -211,17 +211,8 @@ int main() {
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        // Process input
-        bool keys[1024] = {};
-        keys[GLFW_KEY_W] = input.isKeyPressed(GLFW_KEY_W);
-        keys[GLFW_KEY_S] = input.isKeyPressed(GLFW_KEY_S);
-        keys[GLFW_KEY_A] = input.isKeyPressed(GLFW_KEY_A);
-        keys[GLFW_KEY_D] = input.isKeyPressed(GLFW_KEY_D);
-        keys[GLFW_KEY_SPACE] = input.isKeyPressed(GLFW_KEY_SPACE);
-        keys[GLFW_KEY_LEFT_CONTROL] = input.isKeyPressed(GLFW_KEY_LEFT_CONTROL);
-        keys[GLFW_KEY_LEFT_SHIFT] = input.isKeyPressed(GLFW_KEY_LEFT_SHIFT);
-
-        g_camera->processKeyboard(keys, deltaTime);
+        // Process input: use new Camera overload that queries Input directly
+        g_camera->processKeyboard(input, deltaTime);
         g_camera->update(deltaTime);
 
         glm::mat4 view = g_camera->getViewMatrix();

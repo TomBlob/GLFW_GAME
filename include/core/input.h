@@ -1,24 +1,25 @@
 #pragma once
-# include <glfw/glfw3.h>
+#include <glfw/glfw3.h>
+#include <array>
 
 class Input {
 public:
-	Input();
-	~Input();
+    Input();
+    ~Input();
 
     // Keyboard input
-    void updateKeyState(int key, int action);
-    bool isKeyPressed(int key) const;
+    void updateKeyState(int key, int action) noexcept;
+    bool isKeyPressed(int key) const noexcept;
 
     // Mouse input
-    void updateMousePosition(double xpos, double ypos);
-    float getMouseDeltaX();
-    float getMouseDeltaY();
+    void updateMousePosition(double xpos, double ypos) noexcept;
+    float getMouseDeltaX() const noexcept;
+    float getMouseDeltaY() const noexcept;
 
-    void resetMouseFirstFrame();
+    void resetMouseFirstFrame() noexcept;
 
 private:
-    bool keys[1024];
+    std::array<bool, 1024> keys;
     double lastMouseX;
     double lastMouseY;
     float mouseDeltaX;

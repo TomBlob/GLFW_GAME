@@ -1,13 +1,13 @@
 #include "rendering/camera.h"
-#include <glm/gtc/constants.hpp>
+#include "core/input.h" // implementation needs Input
 
 Camera::Camera(glm::vec3 startPos)
     : position(startPos),
-    yaw(-90.0f),
-    pitch(0.0f),
-    fov(45.0f),
-    front(glm::vec3(0.0f, 0.0f, -1.0f)),
-    up(glm::vec3(0.0f, 1.0f, 0.0f))
+      yaw(-90.0f),
+      pitch(0.0f),
+      fov(45.0f),
+      front(glm::vec3(0.0f, 0.0f, -1.0f)),
+      up(glm::vec3(0.0f, 1.0f, 0.0f))
 {
     updateVectors();
 }
@@ -22,30 +22,55 @@ void Camera::clampPitch() {
 }
 
 void Camera::processKeyboard(bool* keys, float deltaTime) {
-    // Movement is now world-space:
-    // - WASD move along world X/Z axes (A/D on X, W/S on Z)
-    // - Space / Left Control move strictly along world Y (up/down)
+    // existing compatibility path: convert bool* to the Input-like checks
     glm::vec3 inputDir(0.0f);
 
     const glm::vec3 WORLD_FORWARD(0.0f, 0.0f, -1.0f);
     const glm::vec3 WORLD_RIGHT(1.0f, 0.0f, 0.0f);
     const glm::vec3 WORLD_UP(0.0f, 1.0f, 0.0f);
 
-    if (keys[GLFW_KEY_W]) inputDir += front;
-    if (keys[GLFW_KEY_S]) inputDir -= front;
-    if (keys[GLFW_KEY_A]) inputDir -= right;
-    if (keys[GLFW_KEY_D]) inputDir += right;
+    if (keys[GLFW_KEY_W]) inputDir += WORLD_FORWARD;
+    if (keys[GLFW_KEY_S]) inputDir -= WORLD_FORWARD;
+    if (keys[GLFW_KEY_A]) inputDir -= WORLD_RIGHT;
+    if (keys[GLFW_KEY_D]) inputDir += WORLD_RIGHT;
     if (keys[GLFW_KEY_SPACE]) inputDir += WORLD_UP;
     if (keys[GLFW_KEY_LEFT_CONTROL]) inputDir -= WORLD_UP;
 
-    if (glm::length(inputDir) > 0.0f)
+    if (glm::length(inputDir) > 0.0f) {
         inputDir = glm::normalize(inputDir);
+        const float currentSpeed = maxSpeed * (keys[GLFW_KEY_LEFT_SHIFT] ? shiftModif : 1.0f);
+        position += inputDir * currentSpeed * deltaTime;
+    }
+}
 
-    float currentSpeed = maxSpeed;
-    if (keys[GLFW_KEY_LEFT_SHIFT])
-        currentSpeed *= shiftModif;
+void Camera::processKeyboard(const Input& input, float deltaTime) {
+    // Camera-relative horizontal movement:
+    // - forward/back use camera forward but flattened to world XZ (y = 0)
+    // - right/left use camera right but flattened to world XZ (y = 0)
+    // - space/ctrl move strictly along world Y
+    glm::vec3 inputDir(0.0f);
 
-    position += inputDir * currentSpeed * deltaTime;
+    const glm::vec3 WORLD_UP(0.0f, 1.0f, 0.0f);
+
+    // flatten front and right to remove vertical component introduced by pitch
+    glm::vec3 flatFront = glm::vec3(front.x, 0.0f, front.z);
+    if (glm::length(flatFront) > 0.0f) flatFront = glm::normalize(flatFront);
+
+    glm::vec3 flatRight = glm::vec3(right.x, 0.0f, right.z);
+    if (glm::length(flatRight) > 0.0f) flatRight = glm::normalize(flatRight);
+
+    if (input.isKeyPressed(GLFW_KEY_W)) inputDir += flatFront;
+    if (input.isKeyPressed(GLFW_KEY_S)) inputDir -= flatFront;
+    if (input.isKeyPressed(GLFW_KEY_A)) inputDir -= flatRight;
+    if (input.isKeyPressed(GLFW_KEY_D)) inputDir += flatRight;
+    if (input.isKeyPressed(GLFW_KEY_SPACE)) inputDir += WORLD_UP;
+    if (input.isKeyPressed(GLFW_KEY_LEFT_CONTROL)) inputDir -= WORLD_UP;
+
+    if (glm::length(inputDir) > 0.0f) {
+        inputDir = glm::normalize(inputDir);
+        const float currentSpeed = maxSpeed * (input.isKeyPressed(GLFW_KEY_LEFT_SHIFT) ? shiftModif : 1.0f);
+        position += inputDir * currentSpeed * deltaTime;
+    }
 }
 
 void Camera::processMouse(float xoffset, float yoffset) {
@@ -64,6 +89,7 @@ void Camera::update(float deltaTime)
     yaw += yawVelocity * deltaTime;
     pitch += pitchVelocity * deltaTime;
 
+    // simple damping
     yawVelocity -= yawVelocity * mouseDamping * deltaTime;
     pitchVelocity -= pitchVelocity * mouseDamping * deltaTime;
 
@@ -72,12 +98,20 @@ void Camera::update(float deltaTime)
 }
 
 void Camera::updateVectors() {
+    const float cy = glm::cos(glm::radians(yaw));
+    const float sy = glm::sin(glm::radians(yaw));
+    const float cp = glm::cos(glm::radians(pitch));
+    const float sp = glm::sin(glm::radians(pitch));
+
     glm::vec3 direction;
-    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    direction.y = sin(glm::radians(pitch));
-    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    direction.x = cy * cp;
+    direction.y = sp;
+    direction.z = sy * cp;
 
     front = glm::normalize(direction);
-    right = glm::normalize(glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f)));
+
+    // compute orthonormal basis using world up (0,1,0)
+    const glm::vec3 worldUp(0.0f, 1.0f, 0.0f);
+    right = glm::normalize(glm::cross(front, worldUp));
     up = glm::normalize(glm::cross(right, front));
 }

@@ -6,13 +6,19 @@
 
 #include <iostream>
 
+class Input; // forward declare to avoid tight coupling in header
+
 class Camera {
 public:
     Camera(glm::vec3 startPos);
 
     glm::mat4 getViewMatrix() const;
 
+    // Keep existing API for callers that use raw key arrays
     void processKeyboard(bool* keys, float deltaTime);
+    // New overload: accept project Input directly to avoid per-frame key array copying
+    void processKeyboard(const Input& input, float deltaTime);
+
     void processMouse(float xoffset, float yoffset);
     void update(float deltaTime);
 
