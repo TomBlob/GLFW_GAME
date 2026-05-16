@@ -94,6 +94,9 @@ It provides a foundational framework for a potential future game project:
 - TODO: Add unit tests for physics calculations and input handling
 - TODO: Needs error handling class
 
+<img src="demos/grounded_demo.gif" width="800" alt="Grounded Demo">
+
+
 ---
 
 ## Project Structure
