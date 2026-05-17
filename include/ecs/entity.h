@@ -12,9 +12,6 @@ public:
     void setGroundY(float y) noexcept { groundY = y; }
     float getGroundY() const noexcept { return groundY; }
 
-	void setCollider(Collider* col) noexcept { collider = col; }
-	Collider* getCollider() const noexcept { return collider; }
-
     virtual void update(float deltaTime) noexcept {}
 
 protected:

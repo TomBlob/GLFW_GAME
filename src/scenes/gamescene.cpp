@@ -21,7 +21,12 @@ void GameScene::onExit() {
 }
 
 void GameScene::update(float deltaTime) {
-	physicsSystem->update(objects, deltaTime);
+    std::cout << "Physics update: " << physicsObjects.size() << " objects\n";
+    if (!physicsSystem) {
+        std::cerr << "PhysicsSystem is null!\n";
+        return;
+    }
+    physicsSystem->update(physicsObjects, deltaTime);
 }
 
 void GameScene::render(const glm::mat4& view, const glm::mat4& projection) {
@@ -65,38 +70,47 @@ void GameScene::setupSceneObjects() {
     }
 
     // Add triangles
-    addGameObject(meshTriangle, glm::vec3(0, 0, -2), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), glm::vec3(1, 0, 0));
-    addGameObject(meshTriangle, glm::vec3(2, 0, -5), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), glm::vec3(0, 1, 0));
-    addGameObject(meshTriangle, glm::vec3(-1, 1, -3), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), glm::vec3(0, 0, 1));
+    addGameObject(meshTriangle, glm::vec3(0, 0, -2), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), glm::vec3(1, 0, 0), ColliderType::Box)->isStatic = true;
+    addGameObject(meshTriangle, glm::vec3(-1, 1, -3), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), glm::vec3(0, 0, 1), ColliderType::Box)->isStatic = true;
 
     // Add cubes
-    addGameObject(meshCube, glm::vec3(0, 0, -3), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), glm::vec3(1, 0, 0));
-    addGameObject(meshCube, glm::vec3(2, 0, -5), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), glm::vec3(0, 1, 0));
-    addGameObject(meshCube, glm::vec3(-2, 0, -4), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), glm::vec3(0, 0, 1));
+    addGameObject(meshCube, glm::vec3(0, -3, -3), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), glm::vec3(1, 0, 0), ColliderType::Box)->isStatic = true;
+    addGameObject(meshCube, glm::vec3(2, -2, -5), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), glm::vec3(0, 1, 0), ColliderType::Box)->isStatic = true;
+    addGameObject(meshCube, glm::vec3(-2, -1, -4), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), glm::vec3(0, 0, 1), ColliderType::Box)->isStatic = true;
 
 	// Add cube edges
-    addGameObject(meshCubeEdges, glm::vec3(0, 0, -3), glm::vec3(0, 0, 0), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0, 0, 0));
-    addGameObject(meshCubeEdges, glm::vec3(2, 0, -5), glm::vec3(0, 0, 0), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0, 0, 0));
-	addGameObject(meshCubeEdges, glm::vec3(-2, 0, -4), glm::vec3(0, 0, 0), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0, 0, 0));
+    addGameObject(meshCubeEdges, glm::vec3(0, -3, -3), glm::vec3(0, 0, 0), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0, 0, 0), ColliderType::Box)->isStatic = true;
+    addGameObject(meshCubeEdges, glm::vec3(2, -2, -5), glm::vec3(0, 0, 0), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0, 0, 0), ColliderType::Box)->isStatic = true;
+	addGameObject(meshCubeEdges, glm::vec3(-2, -1, -4), glm::vec3(0, 0, 0), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0, 0, 0), ColliderType::Box)->isStatic = true;
 
 	// Add floor
     floorObject = std::make_unique<SceneObject>(meshSquare, glm::vec3(0, -3, 0),
                                                 glm::vec3(90, 0, 0), glm::vec3(50, 50, 1),
-                                                glm::vec3(0.4f, 0.4f, 0.4f));
+                                                glm::vec3(0.4f, 0.4f, 0.4f), ColliderType::Box);
+    floorObject->isStatic = true;
+    floorObject->collider->box.halfSize = glm::vec3(25.0f, 0.1f, 25.0f);
+
+	rebuildPhysicsObjects();
 }
 
 SceneObject* GameScene::addGameObject(Mesh* mesh, const glm::vec3& position,
                                      const glm::vec3& rotation, const glm::vec3& scale,
-                                     const glm::vec3& color) {
-    auto obj = std::make_unique<SceneObject>(mesh, position, rotation, scale, color);
+                                     const glm::vec3& color, ColliderType colliderType) {
+    auto obj = std::make_unique<SceneObject>(mesh, position, rotation, scale, color, colliderType);
     SceneObject* ptr = obj.get();
     objects.push_back(std::move(obj));
     return ptr;
 }
 
-std::vector<WorldObject*> GameScene::getPhysicsObjects() {
-    std::vector<WorldObject*> result;
-    for (auto& obj : objects)
-        result.push_back(obj.get());
-    return result;
+void GameScene::registerEntity(Entity* entity) {
+	entities.push_back(entity);
+	rebuildPhysicsObjects();
+}
+
+void GameScene::rebuildPhysicsObjects() {
+    physicsObjects.clear();
+    physicsObjects.reserve(objects.size() + entities.size() + 1);
+    for (auto& obj : objects)  physicsObjects.push_back(obj.get());
+    if (floorObject)           physicsObjects.push_back(floorObject.get());
+    for (auto* e : entities)   physicsObjects.push_back(e);
 }

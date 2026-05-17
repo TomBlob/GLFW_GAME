@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ecs/entity.h"
+#include "scenes/sceneobject.h"
 #include <vector>
 
 class PhysicsSystem {

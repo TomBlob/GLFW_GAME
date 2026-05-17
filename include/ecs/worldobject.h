@@ -18,6 +18,7 @@ public:
     glm::vec3 velocity{ 0.0f };
     float gravityScale = 1.0f;
     bool flying = false;
+	bool isGrounded = false;
 
     WorldObject(const glm::vec3& pos,
         const glm::vec3& rot,

@@ -22,16 +22,20 @@ public:
 
     void setSharedResources(Mesh* tri, Mesh* sq, Mesh* cube, Mesh* edges, const Shader* shader, const Shader* gridShader);
     void setupSceneObjects();
+
     SceneObject* addGameObject(Mesh* mesh, const glm::vec3& position,
         const glm::vec3& rotation, const glm::vec3& scale,
-        const glm::vec3& color);
+        const glm::vec3& color, ColliderType colliderType);
 
-    std::vector<WorldObject*> getPhysicsObjects();
+	void registerEntity(Entity* entity);
 
 private:
-    std::vector<WorldObject*> entities;
-    std::vector<std::unique_ptr<WorldObject>> objects;
-    std::unique_ptr<WorldObject> floorObject;
+    std::vector<std::unique_ptr<SceneObject>> objects;
+    std::vector<Entity*> entities;
+    std::unique_ptr<SceneObject> floorObject;
+    std::vector<WorldObject*> physicsObjects;
+
+    void rebuildPhysicsObjects();
 
     // References to shared resources
     Mesh* meshTriangle;

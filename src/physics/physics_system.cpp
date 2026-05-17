@@ -48,8 +48,8 @@ void PhysicsSystem::resolveCollision(WorldObject& a, WorldObject& b)
 
         // Grounded: the object being pushed *upward* (dir > 0 for a, dir < 0 for b)
         // has landed on a surface — clear its flying flag only.
-        if (!a.isStatic && dir > 0) a.flying = false;  // a is above b, a lands on b
-        if (!b.isStatic && dir < 0) b.flying = false;  // b is above a, b lands on a
+        if (!a.isStatic && dir > 0) a.isGrounded = true;
+        if (!b.isStatic && dir < 0) b.isGrounded = true;
     }
     else
     {
@@ -68,6 +68,7 @@ void PhysicsSystem::update(std::vector<WorldObject*>& entities, float dt)
         if (!e->isStatic && !e->flying) {
             e->velocity.y += -9.81f * e->gravityScale * dt;
         }
+        e->isGrounded = false; // Reset grounded state before collision checks
     }
 
     // 2. Movement — static objects never move

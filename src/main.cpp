@@ -211,6 +211,7 @@ int main() {
 
     // Setup scene objects (supposed to be in onEnter, but we need to set shared resources first)
     gameScene->setupSceneObjects();
+	gameScene->registerEntity(&player); // register player as an entity in the scene
 
     // Cache uniform locations for main shader
     int viewLoc = glGetUniformLocation(shader.ID, "view");
@@ -228,28 +229,19 @@ int main() {
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        // Input only — no update() call here anymore
         player.handleInput(input, *g_camera, deltaTime);
 
-        // Build combined physics list: player + all scene statics
-        std::vector<WorldObject*> physicsObjects = gameScene->getPhysicsObjects();
-        physicsObjects.push_back(&player);
+        // update() now runs physics internally (gravity, integration, collision)
+        currentScene->update(deltaTime);
 
-        // Physics owns gravity, integration, and collision resolution
-        physicsSystem.update(physicsObjects, deltaTime);
-
-        // Camera follows player's resolved position
-        g_camera->position = player.position;
+        g_camera->position = player.position + glm::vec3(0.0f, 0.5f, 0.0f);
         g_camera->update(deltaTime);
 
         glm::mat4 view = g_camera->getViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(g_camera->fov), aspect, 0.1f, 100.0f);
 
         renderer.clear(0.1f, 0.1f, 0.1f);
-
-        currentScene->update(deltaTime);
         currentScene->render(view, projection);
-
         glfwSwapBuffers(window);
     }
 
