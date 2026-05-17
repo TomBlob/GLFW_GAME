@@ -148,6 +148,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\ecs\player.cpp" />
+    <ClCompile Include="src\physics\physics_system.cpp" />
     <ClCompile Include="src\scenes\scenemanager.cpp" />
     <ClCompile Include="src\scenes\gamescene.cpp" />
     <ClCompile Include="src\scenes\menu.cpp" />
@@ -178,7 +179,10 @@
     <None Include="shaders\grid.frag" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\ecs\worldobject.h" />
+    <ClInclude Include="include\physics\collider.h" />
     <ClInclude Include="include\ecs\player.h" />
+    <ClInclude Include="include\physics\physics_system.h" />
     <ClInclude Include="include\rendering\camera.h" />
     <ClInclude Include="include\ecs\components.h" />
     <ClInclude Include="include\ecs\entity.h" />

@@ -66,6 +66,9 @@
     <ClCompile Include="src\ecs\player.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\physics\physics_system.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
@@ -124,6 +127,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\ecs\player.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\physics\collider.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ecs\worldobject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\physics\physics_system.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

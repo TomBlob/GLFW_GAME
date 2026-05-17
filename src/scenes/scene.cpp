@@ -16,3 +16,7 @@ Camera* Scene::getCamera() {
 const Camera* Scene::getCamera() const {
     return camera.get();
 }
+
+void Scene::setPhysicsSystem(PhysicsSystem* physicsSystem) {
+    this->physicsSystem = physicsSystem;
+}

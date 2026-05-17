@@ -2,9 +2,10 @@
 
 GameScene::GameScene()
     : Scene("GameScene"),
-      meshTriangle(nullptr), meshSquare(nullptr),
-      meshCube(nullptr), meshCubeEdges(nullptr),
-      shader(nullptr), gridShader(nullptr) {}
+    meshTriangle(nullptr), meshSquare(nullptr),
+    meshCube(nullptr), meshCubeEdges(nullptr),
+    shader(nullptr), gridShader(nullptr)
+{}
 
 GameScene::~GameScene() = default;
 
@@ -15,12 +16,12 @@ void GameScene::onEnter() {
 
 void GameScene::onExit() {
     std::cout << "Exiting GameScene\n";
-    gameObjects.clear();
+    objects.clear();
     floorObject.reset();
 }
 
 void GameScene::update(float deltaTime) {
-    // Update scene logic here
+	physicsSystem->update(objects, deltaTime);
 }
 
 void GameScene::render(const glm::mat4& view, const glm::mat4& projection) {
@@ -36,7 +37,7 @@ void GameScene::render(const glm::mat4& view, const glm::mat4& projection) {
         floorObject->getMesh()->draw();
     }
     // Render game objects
-    for (const auto& obj : gameObjects) {
+    for (const auto& obj : objects) {
         shader->use();
         glm::mat4 model = obj->getModelMatrix();
         glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE, &model[0][0]);
@@ -89,6 +90,13 @@ SceneObject* GameScene::addGameObject(Mesh* mesh, const glm::vec3& position,
                                      const glm::vec3& color) {
     auto obj = std::make_unique<SceneObject>(mesh, position, rotation, scale, color);
     SceneObject* ptr = obj.get();
-    gameObjects.push_back(std::move(obj));
+    objects.push_back(std::move(obj));
     return ptr;
+}
+
+std::vector<WorldObject*> GameScene::getPhysicsObjects() {
+    std::vector<WorldObject*> result;
+    for (auto& obj : objects)
+        result.push_back(obj.get());
+    return result;
 }

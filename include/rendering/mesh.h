@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <glad/glad.h>
+#include <glm/glm.hpp>
 
 class Mesh {
     unsigned int VAO = 0, VBO = 0;
@@ -20,4 +21,12 @@ public:
     Mesh& operator=(Mesh&& other) noexcept;
 
     void draw() const;
+
+    const glm::vec3& getMinBounds() const;
+    const glm::vec3& getMaxBounds() const;
+    glm::vec3 getHalfSize() const;
+
+    glm::vec3 minBounds;
+    glm::vec3 maxBounds;
+    glm::vec3 size;
 };

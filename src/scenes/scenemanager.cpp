@@ -1,5 +1,4 @@
 #include "scenes/scenemanager.h"
-#include "scenes/scene.h"
 #include <iostream>
 
 SceneManager::SceneManager() : currentScene(nullptr) {}
@@ -28,4 +27,12 @@ Scene* SceneManager::getCurrentScene() {
 
 const Scene* SceneManager::getCurrentScene() const {
     return currentScene;
+}
+
+void SceneManager::setPhysicsSystem(PhysicsSystem* physicsSystem) {
+    // Pass the physics system to all registered scenes that need it
+    for (auto& pair : scenes) {
+        Scene* scene = pair.second.get();
+        scene->setPhysicsSystem(physicsSystem);
+	}
 }

@@ -14,6 +14,8 @@
 #include "scenes/gamescene.h"
 #include "scenes/menu.h"
 
+#include "physics/physics_system.h"
+
 #include "ecs/player.h"
 
 #include <iostream>
@@ -187,6 +189,9 @@ int main() {
 
     g_camera = currentScene->getCamera();
 
+	PhysicsSystem physicsSystem;
+    sceneManager.setPhysicsSystem(&physicsSystem);
+
 
     // -------------------------------------------------------
     // ADD PLAYER
@@ -223,14 +228,18 @@ int main() {
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        // inside main render loop, instead of g_camera->processKeyboard(...)
+        // Input only — no update() call here anymore
         player.handleInput(input, *g_camera, deltaTime);
-        player.update(deltaTime);
 
-        // make camera follow the player (optional smooth follow can be added)
+        // Build combined physics list: player + all scene statics
+        std::vector<WorldObject*> physicsObjects = gameScene->getPhysicsObjects();
+        physicsObjects.push_back(&player);
+
+        // Physics owns gravity, integration, and collision resolution
+        physicsSystem.update(physicsObjects, deltaTime);
+
+        // Camera follows player's resolved position
         g_camera->position = player.position;
-
-        // still handle mouse look as before
         g_camera->update(deltaTime);
 
         glm::mat4 view = g_camera->getViewMatrix();

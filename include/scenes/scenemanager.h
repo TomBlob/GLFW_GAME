@@ -3,6 +3,9 @@
 #include <unordered_map>
 #include <string>
 
+#include "scenes/scenemanager.h"
+#include "scenes/gamescene.h"
+#include "physics/physics_system.h"
 #include "scenes/scene.h"
 
 class Scene;
@@ -20,6 +23,7 @@ public:
     void loadScene(const std::string& name);
     Scene* getCurrentScene();
     const Scene* getCurrentScene() const;
+	void setPhysicsSystem(PhysicsSystem* physicsSystem);
 
 private:
     std::unordered_map<std::string, std::unique_ptr<Scene>> scenes;

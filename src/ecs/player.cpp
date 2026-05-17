@@ -93,10 +93,4 @@ void Player::update(float deltaTime) noexcept {
 
     // Integrate position
     position += velocity * deltaTime;
-
-    // Simple ground collision: snap to ground and zero vertical velocity
-    if (!flying && position.y < groundY) {
-        position.y = groundY;
-        velocity.y = 0.0f;
-    }
 }

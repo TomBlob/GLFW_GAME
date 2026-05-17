@@ -1,5 +1,6 @@
 #pragma once
 #include "scenes/scene.h"
+#include "physics/physics_system.h"
 #include <vector>
 #include <memory>
 #include <iostream>
@@ -25,9 +26,12 @@ public:
         const glm::vec3& rotation, const glm::vec3& scale,
         const glm::vec3& color);
 
+    std::vector<WorldObject*> getPhysicsObjects();
+
 private:
-    std::vector<std::unique_ptr<SceneObject>> gameObjects;
-    std::unique_ptr<SceneObject> floorObject;
+    std::vector<WorldObject*> entities;
+    std::vector<std::unique_ptr<WorldObject>> objects;
+    std::unique_ptr<WorldObject> floorObject;
 
     // References to shared resources
     Mesh* meshTriangle;

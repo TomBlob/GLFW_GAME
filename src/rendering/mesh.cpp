@@ -2,6 +2,23 @@
 #include <glad/glad.h>
 
 Mesh::Mesh(const std::vector<float>& vertices, GLenum mode) : drawMode(mode) {
+    minBounds = glm::vec3(vertices[0], vertices[1], vertices[2]);
+    maxBounds = minBounds;
+
+    for (size_t i = 0; i < vertices.size(); i += 3) {
+        glm::vec3 v(vertices[i], vertices[i + 1], vertices[i + 2]);
+
+        minBounds.x = std::min(minBounds.x, v.x);
+        minBounds.y = std::min(minBounds.y, v.y);
+        minBounds.z = std::min(minBounds.z, v.z);
+
+        maxBounds.x = std::max(maxBounds.x, v.x);
+        maxBounds.y = std::max(maxBounds.y, v.y);
+        maxBounds.z = std::max(maxBounds.z, v.z);
+    }
+
+    size = maxBounds - minBounds;
+
     vertexCount = vertices.size() / 3;
 
     glGenVertexArrays(1, &VAO);
@@ -48,4 +65,16 @@ Mesh& Mesh::operator=(Mesh&& other) noexcept {
 void Mesh::draw() const {
     glBindVertexArray(VAO);
     glDrawArrays(drawMode, 0, vertexCount);
+}
+
+const glm::vec3& Mesh::getMinBounds() const {
+	return minBounds;
+}
+
+const glm::vec3& Mesh::getMaxBounds() const {
+    return maxBounds;
+}
+
+glm::vec3 Mesh::getHalfSize() const {
+    return size * 0.5f;
 }
